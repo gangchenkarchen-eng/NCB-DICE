@@ -269,14 +269,14 @@ body {
 }
  
 .panel {
-    width: 200px;
+    width: 150px;
     background: white;
-    padding: 10px;
-    border-radius: 10px 0 0 10px;
+    padding: 7px 8px;
+    border-radius: 8px 0 0 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    font-size: 12px;
+    font-size: 10px;
     transition: transform 0.3s ease;
-    transform: translateX(196px);
+    transform: translateX(146px);
 }
  
 .panel-group:hover .panel {
@@ -289,22 +289,50 @@ body {
     font-family: 'Nunito', sans-serif;
 }
  
-.small-btn {
-    width: 100%;
-    margin-top: 5px;
-    padding: 8px;
-    font-size: 12px;
-    font-weight: bold;
-    background: #333;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-    border: none;
-    font-family: 'Nunito', sans-serif;
+.panel h4 {
+    font-size: 10px;
+    margin-bottom: 4px;
 }
  
-.small-btn.active {
-    background: #1fc71f;
+.panel-hint {
+    font-size: 9px;
+    color: #888;
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+ 
+.color-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+ 
+.ctog {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 900;
+    font-family: 'Fredoka One', cursive;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: opacity 0.15s, transform 0.1s;
+}
+ 
+.ctog.red    { background: linear-gradient(135deg, #ff3333, #cc0000); }
+.ctog.orange { background: linear-gradient(135deg, #ffaa00, #dd7700); }
+.ctog.yellow { background: linear-gradient(135deg, #ffe030, #ccaa00); }
+.ctog.green  { background: linear-gradient(135deg, #22cc44, #0a8f28); }
+.ctog.blue   { background: linear-gradient(135deg, #3388ff, #1144cc); }
+.ctog.purple { background: linear-gradient(135deg, #bb44ff, #7700cc); }
+ 
+.ctog.excluded {
+    opacity: 0.28;
+    text-decoration: line-through;
+    transform: scale(0.95);
 }
  
 </style>
@@ -367,13 +395,17 @@ body {
 <!-- HIDDEN PANEL -->
 <div class="panel-group">
     <div class="panel">
-        <h4>Controls</h4>
-    <select id="c1"></select>
-    <select id="c2"></select>
-    <select id="c3"></select>
-    <select id="c4"></select>
-    <button class="small-btn" id="randBtn" onclick="toggleRandom()">RANDOM ROLL</button>
-</div>
+        <h4>Exclude colours</h4>
+        <p class="panel-hint">Click a colour to stop it appearing on the next roll</p>
+        <div class="color-toggles">
+            <button class="ctog red"    data-color="red"    onclick="toggleColor('red')">Red</button>
+            <button class="ctog orange" data-color="orange" onclick="toggleColor('orange')">Orange</button>
+            <button class="ctog yellow" data-color="yellow" onclick="toggleColor('yellow')">Yellow</button>
+            <button class="ctog green"  data-color="green"  onclick="toggleColor('green')">Green</button>
+            <button class="ctog blue"   data-color="blue"   onclick="toggleColor('blue')">Blue</button>
+            <button class="ctog purple" data-color="purple" onclick="toggleColor('purple')">Purple</button>
+        </div>
+    </div>
 </div><!-- end panel-group -->
  
 <script>
@@ -489,72 +521,35 @@ function setBG(type){
  
 const colors = ['red','orange','yellow','green','blue','purple'];
  
-let selectedColors = ['red','orange','yellow','green'];
-let dice = [...selectedColors];
-let randomMode = false;
+let dice = ['red','orange','yellow','green'];
  
-const selects = [
-    document.getElementById("c1"),
-    document.getElementById("c2"),
-    document.getElementById("c3"),
-    document.getElementById("c4")
-];
+// Set of colours excluded from rolling
+let excludedColors = new Set();
  
-for(let s of selects){
-    colors.forEach(c=>{
-        let opt = document.createElement("option");
-        opt.value = c;
-        opt.innerText = c;
-        s.appendChild(opt);
-    });
+function toggleColor(color) {
+    const btn = document.querySelector('.ctog[data-color="' + color + '"]');
+    const available = colors.filter(c => !excludedColors.has(c));
+    // Always keep at least 1 colour available
+    if (!excludedColors.has(color)) {
+        if (available.length <= 1) return;
+        excludedColors.add(color);
+        btn.classList.add('excluded');
+    } else {
+        excludedColors.delete(color);
+        btn.classList.remove('excluded');
+    }
 }
- 
-selects.forEach((s,i)=>{
-    s.value = selectedColors[i];
-    s.addEventListener("change", ()=>{
-        selectedColors[i] = s.value;
-    });
-});
  
 function update(i){
     document.getElementById('die'+(i+1)).className = 'die ' + dice[i];
 }
  
-function animate(el){
-    el.classList.remove("roll");
-    void el.offsetWidth;
-    el.classList.add("roll");
-}
- 
-function toggleRandom(){
-    randomMode = !randomMode;
-    const btn = document.getElementById("randBtn");
-    if(randomMode){
-        btn.classList.add("active");
-        btn.innerText = "RANDOM ON";
-    } else {
-        btn.classList.remove("active");
-        btn.innerText = "RANDOM ROLL";
-    }
-}
- 
 function rollAll(){
-    let finalColors = [];
-    if(randomMode){
-        let pool = [...colors].sort(()=>Math.random()-0.5).slice(0,3);
-        finalColors = [pool[0], pool[1], pool[2], pool[Math.floor(Math.random()*3)]];
-        finalColors.sort(()=>Math.random()-0.5);
-    } else {
-        finalColors = selectedColors.slice(0,4);
-        const unique = [...new Set(finalColors)];
-        if(unique.length === 4){
-            const dupColor = unique[Math.floor(Math.random()*4)];
-            const replaceIdx = Math.floor(Math.random()*4);
-            finalColors[replaceIdx] = dupColor;
-        }
-    }
+    // Only pick from colours that aren't excluded
+    const pool = colors.filter(c => !excludedColors.has(c));
+    const finalColors = Array.from({length: 4}, () => pool[Math.floor(Math.random() * pool.length)]);
  
-    // 🎲 Play rolling audio (lasts ~1 second, matching the animation)
+    // Play rolling audio
     playRollSound(1000);
  
     // Build big dice on roll screen
@@ -562,7 +557,7 @@ function rollAll(){
     diceBig.innerHTML = '';
     for(let i = 0; i < 4; i++){
         const d = document.createElement('div');
-        d.className = 'die-big ' + (dice[i] || selectedColors[i]);
+        d.className = 'die-big ' + dice[i];
         d.id = 'diebig' + i;
         diceBig.appendChild(d);
     }
@@ -573,6 +568,19 @@ function rollAll(){
     screen.classList.add('active');
  
     let done = 0;
+ 
+    function finishDie(i) {
+        const el = document.getElementById('diebig' + i);
+        el.className = 'die-big ' + finalColors[i];
+        dice[i] = finalColors[i];
+        update(i);
+        done++;
+        if(done === 4){
+            playFinishSound();
+            setTimeout(()=>{ screen.classList.remove('active'); }, 800);
+        }
+    }
+ 
     for(let i = 0; i < 4; i++){
         const el = document.getElementById('diebig' + i);
         let spins = 0;
@@ -589,19 +597,7 @@ function rollAll(){
             spins++;
             if(spins > 12){
                 clearInterval(interval);
-                el.className = 'die-big ' + finalColors[i];
-                // also update the small die
-                dice[i] = finalColors[i];
-                update(i);
-                done++;
-                if(done === 4){
-                    // 🎵 Play finish chime when all dice have landed
-                    playFinishSound();
-                    // return to main screen after short pause
-                    setTimeout(()=>{
-                        screen.classList.remove('active');
-                    }, 800);
-                }
+                finishDie(i);
             }
         }, 80);
     }
@@ -609,4 +605,3 @@ function rollAll(){
  
 </script>
 </body>
-</html>
