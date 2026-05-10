@@ -380,12 +380,12 @@ body {
  
 // ── AUDIO ──────────────────────────────────────────────────────────────────
 let audioCtx = null;
-
+ 
 function getAudioCtx() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     return audioCtx;
 }
-
+ 
 // ── FINISH SOUND — cheerful ascending chime ────────────────────────────────
 function playFinishSound() {
     const ctx = getAudioCtx();
@@ -394,15 +394,15 @@ function playFinishSound() {
     notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-
+ 
         osc.type = 'sine';
         osc.frequency.value = freq;
-
+ 
         const t = ctx.currentTime + i * 0.13;
         gain.gain.setValueAtTime(0, t);
         gain.gain.linearRampToValueAtTime(0.28, t + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
-
+ 
         // Add a subtle shimmer with a second sine an octave up
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
@@ -411,16 +411,16 @@ function playFinishSound() {
         gain2.gain.setValueAtTime(0, t);
         gain2.gain.linearRampToValueAtTime(0.08, t + 0.02);
         gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-
+ 
         osc.connect(gain);   gain.connect(ctx.destination);
         osc2.connect(gain2); gain2.connect(ctx.destination);
-
+ 
         osc.start(t);  osc.stop(t + 0.5);
         osc2.start(t); osc2.stop(t + 0.35);
     });
 }
 // ──────────────────────────────────────────────────────────────────────────
-
+ 
 // Single "clack" — short noise burst that sounds like a die hitting a surface
 function playClack(volume = 0.35, pitchShift = 1) {
     const ctx = getAudioCtx();
@@ -430,27 +430,27 @@ function playClack(volume = 0.35, pitchShift = 1) {
     for (let i = 0; i < bufferSize; i++) {
         data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
     }
-
+ 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.playbackRate.value = pitchShift;
-
+ 
     // Bandpass to give it that woody/plastic clack character
     const filter = ctx.createBiquadFilter();
     filter.type = 'bandpass';
     filter.frequency.value = 1200 * pitchShift;
     filter.Q.value = 1.2;
-
+ 
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(volume, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-
+ 
     source.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
     source.start();
 }
-
+ 
 // Play a rolling sequence: rapid clacks that slow down and end with a final thud
 function playRollSound(durationMs = 1000) {
     const ctx = getAudioCtx();
@@ -458,7 +458,7 @@ function playRollSound(durationMs = 1000) {
     let interval = 60; // start fast (ms between clacks)
     const slowFactor = 1.12;
     let tick = 0;
-
+ 
     function scheduleClack() {
         if (elapsed >= durationMs - 120) {
             // Final landing thud — louder, lower pitch
@@ -472,11 +472,11 @@ function playRollSound(durationMs = 1000) {
         tick++;
         scheduleClack();
     }
-
+ 
     scheduleClack();
 }
 // ──────────────────────────────────────────────────────────────────────────
-
+ 
 function setBG(type){
     if(type === "dark"){
         document.body.style.background = "#1e1e1e";
@@ -553,7 +553,7 @@ function rollAll(){
             finalColors[replaceIdx] = dupColor;
         }
     }
-
+ 
     // 🎲 Play rolling audio (lasts ~1 second, matching the animation)
     playRollSound(1000);
  
